@@ -1,20 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home Page</title>
-  <link rel="stylesheet" href="/style.css" type="text/css"/>
-</head>
-<body>
-  <h1>Welcome</h1>
-  <ul>
-    <li><a href="/scrape">Scrape</a></li>
-    <li><a href="/scrape/starcraft2">Scrape Starcraft2</a></li>
-    <li><a href="/scrape/league_of_legends">Scrape League_of_legends</a></li>
-    <li><a href="/tally_fcc">Tally Freecodecamp</a></li>
-    <li><a href="/form">Passcode Form</a></li>
-  </ul>
-</body>
+  <head>
+    <%- include("../partials/head", {variant: 'pico'}); %>
+  </head>
+  <body>
+    <h1>Welcome</h1>
+    <ul>
+      <li><a href="/scrape">Scrape</a></li>
+      <li><a href="/scrape/starcraft2">Scrape Starcraft2</a></li>
+      <li><a href="/scrape/league_of_legends">Scrape League_of_legends</a></li>
+      <li><a href="/tally_fcc">Tally Freecodecamp</a></li>
+      <li><a href="/form">Passcode Form</a></li>
+    </ul>
+  </body>
 </html>

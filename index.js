@@ -1,12 +1,13 @@
 import express from 'express'
 import path from 'path'
 import {fileURLToPath} from 'url';
-
+import ejs from 'ejs'
 
 // import { HomePage } from './views/home.js' // before using ejs
 import { getWeather } from './handlers/getWeather.js'
 import { scrapeArticle, genArticleHtml } from './handlers/gamesPosts.js'
 import { TallyFCC } from './handlers/TallyFCC.js'
+import { getPriceFeed } from './handlers/coinFeed.js';
 
 const PORT = process.env.PORT || 8000
 
@@ -23,7 +24,9 @@ app.use(express.urlencoded({extended: false}))
 app.use(express.static(__dirname + '/public'))
 // app.use('/static', express.static('/public'))
 
-app.set('view engine', 'ejs')
+// app.set('view engine', 'ejs') // before using ejs partials
+app.engine('.html', ejs.renderFile);
+app.set('view engine', 'html');
 app.set('views', path.dirname('views'))
 
 
@@ -54,8 +57,6 @@ app.get('/tally_fcc'), (req, res) => {
   TallyFCC(req, res)
 }
 
-
-
 // getWeather is a route level middleware
 app.get('/form', getWeather, (req, res) => {
   console.log('visitor', req.visitorWeather)
@@ -78,15 +79,22 @@ app.get('/form', getWeather, (req, res) => {
 
 app.post('/result', (req, res) => {
   const passcode = req.body.passcode.trim() || 'nothing'
-  res.send(`
-    You submitted this passcode: ${passcode}
-  `)
+  res.render('./views/result.ejs', {
+    passcode
+  })
+  // res.send(`You submitted this passcode: ${passcode}`) // before using ejs
 })
 
 app.get('/api/pets', (req, res) => {
   res.json({pets: [{name: 'wimsey', type: 'cat'}, {name: 'vi', type: 'dog'}]})
 })
 
+app.get('/api/pricefeed', async (req, res) => {
+  res.statusCode = 200;
+  // res.setHeader('Content-Type', 'text/html');
+  const data = await getPriceFeed()
+  res.json({data})
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
