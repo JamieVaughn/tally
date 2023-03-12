@@ -43,20 +43,39 @@ const tally = async (studentName) => {
   //   console.log(err)
   // }
 
+  // const userPg = await page.evaluate(async () => {
+  //   // const notFound = await page.waitForSelector('text/Page not found')
+  //   const timeline = await page.waitForSelector('text/Timeline')
+  //   const username = await page.waitForSelector('.username')
+
+  //   if(username.innerText === students[studentName] || timeline) return true
+
+  //   return false
+  // })
+
+  // let userPg = await Promise.race([
+  //   page.waitForSelector('text/Page not found'),
+  //   page.waitForSelector('text/Timeline'),
+  // ])
+
+  // puppeteer.expect(await userPage.$eval('.username', node => node.innerText)).toBe(students[studentName]);
+
+  // if(!userPg) return {notFound: true}
+
   const limit = await page.evaluate(async () => {
     const pages = await Array.from(document.querySelectorAll(".timeline-pagination_list_item"))
     const textNode = await pages.find(
       p => p.firstChild.nodeName == "#text"
-    ).innerText;
+    ).innerText
     return Number(textNode.split(" ")[2])
   })
+  // to kind of do the above with XPath:
+  // const [el] = await page.$x('//*[@id="content-start"]/div/div[2]/div[3]/div/table')
+  // const txt = await el.getProperty('textContent')
+  // const innerContent = await txt.jsonValue()
 
   let iteration = 1;
   let result = {};
-  // let hasButton = await Promise.race([
-  //   page.waitForSelector('aria/Go to next page'),
-  //   page.waitForSelector('button[aria-label="Go to next page"][disabled]'),
-  // ])
 
   do {
     await tallyCurPg(result);
@@ -64,34 +83,31 @@ const tally = async (studentName) => {
     try {
       await page.click('aria/Go to next page')
     } catch (err) {}
-    // try {
-    //   await page.click('aria/Go to next page')
-    //   hasButton = await Promise.race([
-    //     page.waitForSelector('aria/Go to next page'),
-    //     page.waitForSelector('button[aria-label="Go to next page"][disabled]'),
-    //   ])
-    // } catch (err) {
-    //   console.error(err, 'no next button')
-    //   hasButton = null
-    // }
-  } while ( iteration <= limit) // && hasButton)
+  } while ( iteration <= limit)
 
   async function tallyCurPg(count = {}) {
     const timeline = await page.evaluate(() => {
       return Array
-        .from(document.querySelectorAll("tr.timeline-row > td > a")) // for the name1 files it used:  tr.timeline-row a
+        .from(document.querySelectorAll("tr.timeline-row > td > a")) // for the <name>1.json files it used:  tr.timeline-row a
         .map(a => {
           const href = a.getAttribute('href')
           const isProject = href.includes('project')
+          const isCertificate = href.includes('certificat') // matches certification or certificate
           const kind = href.split('/')[3] ?? href
-          return isProject ? 'project-'+ href.split('/').at(-1) : kind
+          if(isProject) {
+            return 'project-'+ href.split('/').at(-1)
+          } else if(isCertificate) {
+            return 'certificate-'+ href.split('/').at(-1)
+          } else {
+            return kind
+          }
         })
     })
     const rollup = await timeline.reduce((a, c) => {
       a[c] != null ? a[c]++ : (a[c] = 1);
       return a;
     }, count)
-    if(!(iteration%10)) console.log(`rollup ${iteration}`, await rollup)
+    // if(!(iteration%30)) console.log(`rollup ${iteration}`, await rollup) // in-process debug logging
     return await rollup
   }
 

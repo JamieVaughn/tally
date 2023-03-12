@@ -26,7 +26,7 @@ await page.type('#ourfield', 'blue')
 await Promise.all([
   await page.click('#ourform button'),
   await page.waitForNavigation(),
-  // await page.waitFor(5000),
+  // await page.waitForTimeout(5000),
 ])
 const info = await page.$eval('#message', el => el.textContent)
 // await fs.writeFile('form_response.txt', info, (err) => err && console.error(err))

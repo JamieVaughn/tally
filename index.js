@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 import path from 'path'
 import {fileURLToPath} from 'url';
 import ejs from 'ejs'
@@ -15,6 +16,11 @@ const app = express()
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+// to enable relaxed CORS policy
+app.use(cors())
+// to enable json request handling
+app.use(express.json())
 
 // Global/Application level middleware
 // middleware for auto encoding form body data onto req param
@@ -100,6 +106,14 @@ app.get('/api/pricefeed', async (req, res) => {
   // res.setHeader('Content-Type', 'text/html');
   const data = await getPriceFeed()
   res.json({data})
+})
+
+app.post('/api/secret', (req, res) => {
+  if(req.body.username && req.body.password === 'secret') {
+    res.send(`Hi ${req.body.username}! You are now logged in.`)
+  } else {
+    res.send("Login failed.")
+  }
 })
 
 app.listen(PORT, () => {
