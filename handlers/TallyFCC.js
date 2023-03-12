@@ -1,68 +1,83 @@
 import * as puppeteer from 'puppeteer'
-// import fs from 'fs' 
+import fs from 'fs' 
 // import cron from 'node-cron'
 
 const students = {
-  jamie: 'fcc5201f47b-6b22-4273-9e62-b24cef2f8efc'
+  jamie: 'fcc5201f47b-6b22-4273-9e62-b24cef2f8efc',
+  brett: 'fcc321f603b-a7f6-4e89-ab59-a2d37a7cfbc3',
+  sandra: 'fcc035112b5-cfa7-471f-a40a-0bad863c932c',
+  lance: 'fcc7831610a-2fb3-47bb-96a5-602e267ef757',
+  davidm: 'seaeagles',
+  jackie: 'JSM-Dev',
+  akul: 'fccbba861c9-ebd9-497e-8b4b-6b9bcd273f22',
+  heatherrooo: 'heatherrooo',
 }
 
 
-const tally = async () => {
-  // const btnSelector = 'button[aria-label="Go to next page"]'
-
+const tally = async (student) => {
   const browser = await puppeteer.launch({headless: true})
   const page = await browser.newPage()
-  await page.goto(`https://www.freecodecamp.org/${students.jamie}`)
+  await page.goto(`https://www.freecodecamp.org/${student}`)
 
-  // const pages = await page.waitForSelector('.timeline-pagination_list')
-  const limit = await page.evaluate(() => {
-    const pages = Array.from(document.querySelectorAll(".timeline-pagination_list_item"))
-    console.log(pages)
-    const textNode = pages.find(
+  const limit = await page.evaluate(async () => {
+    const pages = await Array.from(document.querySelectorAll(".timeline-pagination_list_item"))
+    const textNode = await pages.find(
       p => p.firstChild.nodeName == "#text"
-      );
-    return Number(textNode.innerText.split(" ")[2])
+    ).innerText;
+    return Number(textNode.split(" ")[2])
   })
 
-  let iteration = 0;
+  let iteration = 1;
   let result = {};
+  // let hasButton = await Promise.race([
+  //   page.waitForSelector('aria/Go to next page'),
+  //   page.waitForSelector('button[aria-label="Go to next page"][disabled]'),
+  // ])
 
-  let hasButton = await page.evaluate(() => document.querySelector('button[aria-label="Go to next page"]'))
-
-  console.log(limit, hasButton) 
-  while (hasButton && iteration <= limit) {
-    iteration++;
+  do {
     await tallyCurPg(result);
-    page.click('button[aria-label="Go to next page"]')
-    hasButton = await page.evaluate(() => document.querySelector('button[aria-label="Go to next page"]'))
-  }
+    iteration++;
+    try {
+      await page.click('aria/Go to next page')
+    } catch (err) {}
+    // try {
+    //   await page.click('aria/Go to next page')
+    //   hasButton = await Promise.race([
+    //     page.waitForSelector('aria/Go to next page'),
+    //     page.waitForSelector('button[aria-label="Go to next page"][disabled]'),
+    //   ])
+    // } catch (err) {
+    //   console.error(err, 'no next button')
+    //   hasButton = null
+    // }
+  } while ( iteration <= limit) // && hasButton)
 
-  async function tallyCurPg(obj) {
+  async function tallyCurPg(count = {}) {
     const timeline = await page.evaluate(() => {
       return Array
         .from(document.querySelectorAll("tr.timeline-row a"))
-        .map(a => a.getAttribute('href').split("/")[5])
-        .reduce((a, c) => {
-          a[c] != null ? a[c]++ : (a[c] = 1);
-          return a;
-        }, obj);
+        .map(a => {
+          return a.getAttribute('href').split("/")[3]
+        })
     })
-    return timeline
+    const rollup = await timeline.reduce((a, c) => {
+      a[c] != null ? a[c]++ : (a[c] = 1);
+      return a;
+    }, count)
+    console.log(`rollup ${iteration}`, await rollup)
+    return await rollup
   }
 
+  console.log('final result:', await result)
   await browser.close()
-
-  console.log('result', result)
-  return result
+  return await result
 }
 
-tally()
+Object.entries(students).forEach(([student, id]) => {
+  console.log(student)
+  tally(id)
+})
 
-
-export const TallyFCC = (req, res) => {
-  
-  res.send('Hello')
-}
 
 // browser console version
 // function tallyTimeline() {
@@ -82,22 +97,22 @@ export const TallyFCC = (req, res) => {
 //   }
 
 //   function tallyThisPage(obj) {
-//     var xpath = "//h2[text()='Timeline']";
-//     var matchingElement = document.evaluate(
-//       xpath,
-//       document,
-//       null,
-//       XPathResult.FIRST_ORDERED_NODE_TYPE,
-//       null
-//     ).singleNodeValue;
-//     return Array.from(
-//       matchingElement.nextElementSibling.querySelectorAll("tbody a")
-//     )
-//       .map(i => i.href.split("/")[5])
-//       .reduce((a, c) => {
-//         a[c] != null ? a[c]++ : (a[c] = 1);
-//         return a;
-//       }, obj);
+    // var xpath = "//h2[text()='Timeline']";
+    // var matchingElement = document.evaluate(
+    //   xpath,
+    //   document,
+    //   null,
+    //   XPathResult.FIRST_ORDERED_NODE_TYPE,
+    //   null
+    // ).singleNodeValue;
+    // return Array.from(
+    //   matchingElement.nextElementSibling.querySelectorAll("tbody a")
+    // )
+    //   .map(i => i.href.split("/")[5])
+    //   .reduce((a, c) => {
+    //     a[c] != null ? a[c]++ : (a[c] = 1);
+    //     return a;
+    //   }, obj);
 //   }
 //   return countObj;
 // }
