@@ -10,14 +10,38 @@ const students = {
   davidm: 'seaeagles',
   jackie: 'JSM-Dev',
   akul: 'fccbba861c9-ebd9-497e-8b4b-6b9bcd273f22',
-  heatherrooo: 'heatherrooo',
+  heather: 'heatherrooo',
+  koi: 'koi95'
 }
 
+// Object.entries(students).forEach(async ([student, id]) => {
+//   console.log('student', student)
+//   await tally(id, student)
+// })
 
-const tally = async (student) => {
+function readWriteFile() {
+  fs.readFile('./input/students.txt', 'utf-8', (err, data) => {
+    if(err) throw err
+    console.log(data)
+    fs.writeFile('./output/students.html', `<div>${data}</div>`, err => {
+      if(err) throw err
+      console.log('File creation was successful.')
+    })
+  })
+}
+
+const tally = async (studentName) => {
   const browser = await puppeteer.launch({headless: true})
   const page = await browser.newPage()
-  await page.goto(`https://www.freecodecamp.org/${student}`)
+  await page.goto(`https://www.freecodecamp.org/${students[studentName]}`)
+
+  // let notFound
+  // try {
+  //   notFound = await page.waitForSelector('text/Page not found');
+  //   if(notFound) return {notFound: true}
+  // } catch (err) {
+  //   console.log(err)
+  // }
 
   const limit = await page.evaluate(async () => {
     const pages = await Array.from(document.querySelectorAll(".timeline-pagination_list_item"))
@@ -55,28 +79,35 @@ const tally = async (student) => {
   async function tallyCurPg(count = {}) {
     const timeline = await page.evaluate(() => {
       return Array
-        .from(document.querySelectorAll("tr.timeline-row a"))
+        .from(document.querySelectorAll("tr.timeline-row > td > a")) // for the name1 files it used:  tr.timeline-row a
         .map(a => {
-          return a.getAttribute('href').split("/")[3]
+          const href = a.getAttribute('href')
+          const isProject = href.includes('project')
+          const kind = href.split('/')[3] ?? href
+          return isProject ? 'project-'+ href.split('/').at(-1) : kind
         })
     })
     const rollup = await timeline.reduce((a, c) => {
       a[c] != null ? a[c]++ : (a[c] = 1);
       return a;
     }, count)
-    console.log(`rollup ${iteration}`, await rollup)
+    if(!(iteration%10)) console.log(`rollup ${iteration}`, await rollup)
     return await rollup
   }
 
   console.log('final result:', await result)
   await browser.close()
+  fs.writeFile(`./output/${studentName}.json`, JSON.stringify(result, null, 2), err => {
+    if(err) throw err
+    console.error(err) 
+  })
   return await result
 }
 
-Object.entries(students).forEach(([student, id]) => {
-  console.log(student)
-  tally(id)
-})
+tally('lance')
+
+// jackie
+// sandra
 
 
 // browser console version
