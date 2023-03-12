@@ -51,11 +51,17 @@ app.get('/scrape/:gameId', (req, res) => {
   scrapeArticle(req, res)
 })
 
-app.get('/tally_fcc'), (req, res) => {
-  res.statusCode = 200;
+// app.get('/fcc'), (req, res) => {
+  // res.statusCode = 200;
   // res.setHeader('Content-Type', 'text/html');
+  // TallyFCC(req, res)
+//   res.send('hello')
+// }
+
+app.get('/hw', (req, res) => {
+  console.log('hw', req)
   TallyFCC(req, res)
-}
+})
 
 // getWeather is a route level middleware
 app.get('/form', getWeather, (req, res) => {
@@ -97,5 +103,5 @@ app.get('/api/pricefeed', async (req, res) => {
 })
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}: http://localhost:${PORT}`)
 })

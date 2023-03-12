@@ -2,6 +2,8 @@ import * as cheerio from 'cheerio'
 import axios from 'axios'
 
 export async function getPriceFeed() {
+  console.log('pricefeed start')
+
   try {
     const siteUrl = 'https://coinmarketcap.com'
     const { data } = await axios({
@@ -9,7 +11,7 @@ export async function getPriceFeed() {
       url: siteUrl
     })
     const $ = cheerio.load(data)
-    const elSelector = '#__next > div > div.main-content > div.sc-1a736df3-0.PimrZ.cmc-body-wrapper > div > div:nth-child(1) > div.sc-f7a61dda-2.efhsPu > table > tbody > tr'
+    const elSelector = '#__next > div > div.main-content > div.cmc-body-wrapper > div > div:nth-child(1) > div > table > tbody > tr'
 
     const keys = [
       'rank', 'name', 'price', '1h', '24h', '7d', 'marketCap', 'volume', 'circulatingSupply'
@@ -32,11 +34,12 @@ export async function getPriceFeed() {
         }
         coinArr.push(coinObj)
       })
-      console.log('chec', coinArr[0])
     })
-  
     return coinArr
   } catch (err) {
     console.log(err)
   }
+  console.log('pricefeed done')
 }
+
+getPriceFeed()
