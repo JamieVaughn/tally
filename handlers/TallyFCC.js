@@ -1,18 +1,7 @@
 import * as puppeteer from 'puppeteer'
 import fs from 'fs' 
 // import cron from 'node-cron'
-
-const students = {
-  jamie: 'fcc5201f47b-6b22-4273-9e62-b24cef2f8efc',
-  brett: 'fcc321f603b-a7f6-4e89-ab59-a2d37a7cfbc3',
-  sandra: 'fcc035112b5-cfa7-471f-a40a-0bad863c932c',
-  lance: 'fcc7831610a-2fb3-47bb-96a5-602e267ef757',
-  davidm: 'seaeagles',
-  jackie: 'JSM-Dev',
-  akul: 'fccbba861c9-ebd9-497e-8b4b-6b9bcd273f22',
-  heather: 'heatherrooo',
-  koi: 'koi95'
-}
+import { students } from '../input/students.js'
 
 // Object.entries(students).forEach(async ([student, id]) => {
 //   console.log('student', student)
@@ -76,9 +65,12 @@ const tally = async (studentName) => {
 
   let iteration = 1;
   let result = {};
+  const hrefs = []
+  let data
 
   do {
-    await tallyCurPg(result);
+    data = await tallyCurPg(result);
+    hrefs.push(...data)
     iteration++;
     try {
       await page.click('aria/Go to next page')
@@ -86,34 +78,37 @@ const tally = async (studentName) => {
   } while ( iteration <= limit)
 
   async function tallyCurPg(count = {}) {
-    const timeline = await page.evaluate(() => {
+    const hrefs = await page.evaluate(() => {
       return Array
         .from(document.querySelectorAll("tr.timeline-row > td > a")) // for the <name>1.json files it used:  tr.timeline-row a
         .map(a => {
-          const href = a.getAttribute('href')
-          const isProject = href.includes('project')
-          const isCertificate = href.includes('certificat') // matches certification or certificate
-          const kind = href.split('/')[3] ?? href
-          if(isProject) {
-            return 'project-'+ href.split('/').at(-1)
-          } else if(isCertificate) {
-            return 'certificate-'+ href.split('/').at(-1)
-          } else {
-            return kind
-          }
+          return a.getAttribute('href')
         })
     })
-    const rollup = await timeline.reduce((a, c) => {
-      a[c] != null ? a[c]++ : (a[c] = 1);
-      return a;
-    }, count)
-    // if(!(iteration%30)) console.log(`rollup ${iteration}`, await rollup) // in-process debug logging
-    return await rollup
+    const challenges = hrefs.map(href => {
+      const isProject = href.includes('project')
+      const isCertificate = href.includes('certificat') // matches certification or certificate
+      const kind = href.split('/')[3] ?? href
+      if(isProject) {
+        return 'project-'+ href.split('/').at(-1)
+      } else if(isCertificate) {
+        return 'certificate-'+ href.split('/').at(-1)
+      } else {
+        return kind
+      }
+    })
+    const rollup = await challenges.reduce((a, c) => (a[c]&&=a[c]+1, a[c]||=1, a), count)
+    if(!(iteration%30)) console.log(`rollup ${iteration}`, await rollup) // in-process debug logging
+    return await hrefs
   }
 
   console.log('final result:', await result)
   await browser.close()
   fs.writeFile(`./output/${studentName}.json`, JSON.stringify(result, null, 2), err => {
+    if(err) throw err
+    console.error(err) 
+  })
+  fs.writeFile(`./output/${studentName}-hrefs.json`, JSON.stringify(hrefs, null, 2), err => {
     if(err) throw err
     console.error(err) 
   })
