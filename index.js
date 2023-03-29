@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import {fileURLToPath} from 'url';
 import ejs from 'ejs'
+import cookieParser from 'cookie-parser';
 
 // import { HomePage } from './views/home.js' // before using ejs
 import { getWeather } from './handlers/getWeather.js'
@@ -21,6 +22,8 @@ const __dirname = path.dirname(__filename)
 app.use(cors())
 // to enable json request handling
 app.use(express.json())
+// to enable auto-reading of cookies via req.cookies: https://www.npmjs.com/package/cookie-parser
+app.use(cookieParser())
 
 // Global/Application level middleware
 // middleware for auto encoding form body data onto req param
@@ -41,6 +44,16 @@ console.log('join', path.join(__dirname, '/views', 'home.ejs'))
 console.log('join', path.join(__dirname, '/public', 'style.css'))
 
 app.get('/', (req, res) => {
+  console.log(req.cookies) // see incoming cookies
+  // more on cookies, CSRF and sessions: 
+  // https://github.com/LearnWebCode/youtube-cookies-and-more
+  // https://www.youtube.com/watch?v=uXDnS5PcjCA&list=PLpcSpRrAaOargYaCNYxZCiFIp9YTqEl-l&index=19
+  res.cookie('key', 'value') // send/attach outgoing insecure cookies
+  res.cookie('secret', 'value', {httpOnly: true}) // client-secure cookies
+  res.cookie('https', 'only', {
+    secure: true, // on https domains cookies
+    maxAge: 12000, // expires after X ms
+  }) 
   // res.send(HomePage) // before using ejs
   res.render('./views/home.ejs')
 })
